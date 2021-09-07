@@ -1,9 +1,15 @@
+import FileHelper from './fileHelper';
 import { logger } from './logger';
+import { dirname, resolve } from 'path'
+import { fileURLToPath } from 'url'
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const defaultDonwloadsFolder = resolve(__dirname, '../', "downloads");
 export default class Routes {
     io
-    constructor() {
-
+    constructor(donwloadsFolder = defaultDonwloadsFolder) {
+        this.donwloadsFolder = donwloadsFolder
+        this.fileHelper = FileHelper
     }
 
     setSocketInstance(io) {
@@ -25,13 +31,14 @@ export default class Routes {
     }
 
     async get(request, response) {
-        logger.info('get')
-        response.end()
+        const files = await this.fileHelper.getFileStatus(this.donwloadsFolder);
+        response.writeHead(200);
+        response.end(JSON.stringify(files));
     }
 
     handler(request, response) {
         response.setHeader('Access-Control-Allow-Origin', '*')
-        const chosen = this[request.method.toLowerCase()]  || this.defaultRoute
+        const chosen = this[request.method.toLowerCase()] || this.defaultRoute
         return chosen.apply(this, [request, response])
     }
 }
